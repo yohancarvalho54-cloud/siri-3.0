@@ -257,13 +257,12 @@
 
     function runTile(action) {
       const box = document.getElementById('ai-response');
-      const model = document.querySelector('.model-tab.active').innerText;
-      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}] Hardware Execution:</span> Successfully initialized ${action} module protocol. Device sensors responding normally.`;
+      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">System:</span> ${action} tool activated and ready.`;
     }
 
     function triggerMic() {
       const box = document.getElementById('ai-response');
-      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">Voice Input:</span> Listening for audio commands... Speak now.`;
+      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">Listening:</span> Speak your command...`;
     }
 
     function handleKey(e) {
@@ -279,26 +278,28 @@
       
       if(text !== '') {
         const model = document.querySelector('.model-tab.active').innerText;
-        box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}] Processing:</span> Analyzing query...`;
+        box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Thinking...`;
         
         setTimeout(() => {
           let reply = "";
           const lower = text.toLowerCase();
           
-          if (lower.includes('hello') || lower.includes('hi')) {
-            reply = "Hello! Siri 2.0 neural core online. How can I assist you with your tasks today?";
+          if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+            reply = "Hey! What's up? How can I help you out today?";
+          } else if (lower.includes('how are you')) {
+            reply = "I'm doing great, systems are fully operational. What are we working on?";
           } else if (lower.includes('who are you') || lower.includes('what is your name')) {
-            reply = "I am Siri 2.0, an advanced cross-model AI assistant integrated natively on mobile architecture.";
-          } else if (lower.includes('battery') || lower.includes('power')) {
-            reply = "System power status: Optimal. Battery regulation stable at 84% charge level.";
+            reply = "I'm Siri 2.0, your personal AI assistant.";
+          } else if (lower.includes('battery')) {
+            reply = "Your battery level looks good and power management is running normally.";
           } else if (lower.includes('time')) {
-            reply = `Current local system time is ${new Date().toLocaleTimeString()}.`;
+            reply = `It's currently ${new Date().toLocaleTimeString()}.`;
           } else {
-            reply = `Query processed successfully. Executed neural routing for: "${text}". All sub-routines functioning within standard parameters.`;
+            reply = `That's an interesting point about "${text}". Let me know if you want me to look into it further or run a specific action.`;
           }
 
           box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
-        }, 600);
+        }, 500);
 
         input.value = '';
       }
