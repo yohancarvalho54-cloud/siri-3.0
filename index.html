@@ -5,13 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SIRI 2.0</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script type="importmap">
-    {
-      "imports": {
-        "@google/genai": "https://esm.run/@google/genai"
-      }
-    }
-  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -249,46 +242,39 @@
     </div>
   </div>
 
-  <script type="module">
-    import { GoogleGenAI } from "@google/genai";
+  <script>
+    const GEMINI_API_KEY = "AQ.Ab8RN6K4_tOliTAtYO8yro51ZAKXSUJoLSFKObuZAOPrCLhjAQ";
+    let conversationHistory = [];
 
-    const ai = new GoogleGenAI({ apiKey: "AQ.Ab8RN6K4_tOliTAtYO8yro51ZAkXSUJoLSFKObuZAoPRcLhjAQ" });
-    let chatSession = ai.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: "You are Siri 2.0, an intelligent mobile assistant. Answer queries naturally and concisely.",
-      }
-    });
-
-    window.updateClock = function() {
+    function updateClock() {
       const now = new Date();
       document.getElementById('clock').innerText = now.toTimeString().substring(0,5);
     }
-    setInterval(window.updateClock, 1000);
-    window.updateClock();
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    window.selectModel = function(element) {
+    function selectModel(element) {
       document.querySelectorAll('.model-tab').forEach(tab => tab.classList.remove('active'));
       element.classList.add('active');
     }
 
-    window.runTile = function(action) {
+    function runTile(action) {
       const box = document.getElementById('ai-response');
       box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">System:</span> ${action} tool activated and ready.`;
     }
 
-    window.triggerMic = function() {
+    function triggerMic() {
       const box = document.getElementById('ai-response');
       box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">Listening:</span> Speak your command...`;
     }
 
-    window.handleKey = function(e) {
+    function handleKey(e) {
       if (e.key === 'Enter') {
-        window.sendCommand();
+        sendCommand();
       }
     }
 
-    window.sendCommand = async function() {
+    async function sendCommand() {
       const input = document.getElementById('user-input');
       const text = input.value.trim();
       const box = document.getElementById('ai-response');
@@ -298,10 +284,31 @@
         box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Thinking...`;
         input.value = '';
 
+        conversationHistory.push({ role: "user", parts: [{ text: text }] });
+
         try {
-          const result = await chatSession.sendMessage({ message: text });
-          const answer = result.text;
-          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${answer}`;
+          const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-goog-api-key': GEMINI_API_KEY
+            },
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: "You are an intelligent mobile assistant named Siri 2.0. Answer queries naturally and keep track of context." }]
+              },
+              contents: conversationHistory
+            })
+          });
+          
+          const data = await res.json();
+          if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const answer = data.candidates[0].content.parts[0].text;
+            conversationHistory.push({ role: "model", parts: [{ text: answer }] });
+            box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${answer}`;
+          } else {
+            fallbackResponse(text, model);
+          }
         } catch (err) {
           fallbackResponse(text, model);
         }
@@ -322,7 +329,7 @@
       } else if (lower.includes('time')) {
         reply = `Local time is ${new Date().toLocaleTimeString()}.`;
       } else {
-        reply = `Processed context for "${text}". Systems running optimal under ${model}.`;
+        reply = `I processed "${text}". Everything is running smoothly under ${model}.`;
       }
 
       box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
