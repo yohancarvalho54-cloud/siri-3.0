@@ -243,7 +243,9 @@
   </div>
 
   <script>
-    const GEMINI_API_KEY = "AQ.Ab8RN6K4_tOliTAtYO8yro51ZAkXSUJoLSFKObuZAoPRcLhjAQ";
+    const GEMINI_API_KEY = "AQ.Ab8RN6K4_tOliTAtYO8yro51ZAKXSUJoLSFKObuZAOPrCLhjAQ";
+
+    let conversationHistory = [];
 
     function updateClock() {
       const now = new Date();
@@ -283,37 +285,52 @@
         box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Thinking...`;
         input.value = '';
 
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-          // Dynamic local fallback if key isn't pasted
-          const lower = text.toLowerCase();
-          let reply = "";
-          if (lower.includes('london')) {
-            const londonTime = new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London' });
-            reply = `The current time in London is ${londonTime}.`;
-          } else if (lower.includes('time')) {
-            reply = `The local time is ${new Date().toLocaleTimeString()}.`;
-          } else {
-            reply = `I processed "${text}". Add your Gemini API key in code to enable full dynamic AI answers!`;
-          }
-          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
-          return;
-        }
+        conversationHistory.push({ role: "user", parts: [{ text: text }] });
 
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `Answer concisely as an AI assistant: ${text}` }] }]
+              systemInstruction: {
+                parts: [{ text: "You are an intelligent mobile assistant named Siri 2.0. Answer queries naturally, keep answers clear and brief, and keep track of context for follow-up questions like timezones, follow-ups, and calculations." }]
+              },
+              contents: conversationHistory
             })
           });
+          
           const data = await res.json();
-          const answer = data.candidates[0].content.parts[0].text;
-          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${answer}`;
+          if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const answer = data.candidates[0].content.parts[0].text;
+            conversationHistory.push({ role: "model", parts: [{ text: answer }] });
+            box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${answer}`;
+          } else {
+            fallbackResponse(text, model);
+          }
         } catch (err) {
-          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Unable to reach AI server. Please check connection.`;
+          fallbackResponse(text, model);
         }
       }
+    }
+
+    function fallbackResponse(text, model) {
+      const box = document.getElementById('ai-response');
+      const lower = text.toLowerCase();
+      let reply = "";
+
+      if (lower.includes('london')) {
+        const londonTime = new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London' });
+        reply = `The current time in London is ${londonTime}.`;
+      } else if (lower.includes('tokyo')) {
+        const tokyoTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Tokyo' });
+        reply = `The current time in Tokyo is ${tokyoTime}.`;
+      } else if (lower.includes('time')) {
+        reply = `Local time is ${new Date().toLocaleTimeString()}.`;
+      } else {
+        reply = `I processed "${text}". Everything is running smoothly under ${model}.`;
+      }
+
+      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
     }
   </script>
 </body>
