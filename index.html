@@ -108,6 +108,7 @@
       font-size: 11px;
       letter-spacing: 2px;
       color: #6b7280;
+      text-align: center;
     }
     .grid {
       display: grid;
@@ -230,7 +231,7 @@
 
     <div style="display:flex; gap:10px; align-items:center;">
       <div class="chat-box" style="flex:1;">
-        <input type="text" id="user-input" placeholder="Issue command...">
+        <input type="text" id="user-input" placeholder="Issue command..." onkeypress="handleKey(event)">
       </div>
       <div class="icon-btn" onclick="sendCommand()"><i class="fa-solid fa-paper-plane"></i></div>
       <div class="icon-btn" onclick="triggerMic()"><i class="fa-solid fa-microphone"></i></div>
@@ -251,7 +252,9 @@
     }
 
     function runTile(action) {
-      alert(action + ' action triggered!');
+      const status = document.getElementById('status-label');
+      status.innerText = action.toUpperCase() + ' ACTIVE';
+      status.style.color = '#00f2fe';
     }
 
     function triggerMic() {
@@ -265,10 +268,25 @@
       }
     }
 
+    function handleKey(e) {
+      if (e.key === 'Enter') {
+        sendCommand();
+      }
+    }
+
     function sendCommand() {
       const input = document.getElementById('user-input');
-      if(input.value.trim() !== '') {
-        alert('Executing: ' + input.value);
+      const text = input.value.trim();
+      const status = document.getElementById('status-label');
+      
+      if(text !== '') {
+        const activeModel = document.querySelector('.model-tab.active').innerText;
+        status.innerHTML = `<span style="color:#00f2fe">${activeModel}:</span> Thinking...`;
+        
+        setTimeout(() => {
+          status.innerHTML = `<span style="color:#00f2fe">Response:</span> Handled "${text}"`;
+        }, 800);
+
         input.value = '';
       }
     }
