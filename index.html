@@ -203,7 +203,7 @@
     </div>
 
     <div class="response-card" id="ai-response">
-      <span style="color:#00f2fe; font-weight:600;">System Ready:</span> Tap a tile or type a command below to begin interaction.
+      <span style="color:#00f2fe; font-weight:600;">System Ready:</span> Ask me anything.
     </div>
 
     <div class="grid">
@@ -243,6 +243,8 @@
   </div>
 
   <script>
+    const GEMINI_API_KEY = "AQ.Ab8RN6K4_tOliTAtYO8yro51ZAkXSUJoLSFKObuZAoPRcLhjAQ";
+
     function updateClock() {
       const now = new Date();
       document.getElementById('clock').innerText = now.toTimeString().substring(0,5);
@@ -271,7 +273,7 @@
       }
     }
 
-    function sendCommand() {
+    async function sendCommand() {
       const input = document.getElementById('user-input');
       const text = input.value.trim();
       const box = document.getElementById('ai-response');
@@ -279,29 +281,38 @@
       if(text !== '') {
         const model = document.querySelector('.model-tab.active').innerText;
         box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Thinking...`;
-        
-        setTimeout(() => {
-          let reply = "";
-          const lower = text.toLowerCase();
-          
-          if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-            reply = "Hey! What's up? How can I help you out today?";
-          } else if (lower.includes('how are you')) {
-            reply = "I'm doing great, systems are fully operational. What are we working on?";
-          } else if (lower.includes('who are you') || lower.includes('what is your name')) {
-            reply = "I'm Siri 2.0, your personal AI assistant.";
-          } else if (lower.includes('battery')) {
-            reply = "Your battery level looks good and power management is running normally.";
-          } else if (lower.includes('time')) {
-            reply = `It's currently ${new Date().toLocaleTimeString()}.`;
-          } else {
-            reply = `That's an interesting point about "${text}". Let me know if you want me to look into it further or run a specific action.`;
-          }
-
-          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
-        }, 500);
-
         input.value = '';
+
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+          // Dynamic local fallback if key isn't pasted
+          const lower = text.toLowerCase();
+          let reply = "";
+          if (lower.includes('london')) {
+            const londonTime = new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London' });
+            reply = `The current time in London is ${londonTime}.`;
+          } else if (lower.includes('time')) {
+            reply = `The local time is ${new Date().toLocaleTimeString()}.`;
+          } else {
+            reply = `I processed "${text}". Add your Gemini API key in code to enable full dynamic AI answers!`;
+          }
+          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
+          return;
+        }
+
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Answer concisely as an AI assistant: ${text}` }] }]
+            })
+          });
+          const data = await res.json();
+          const answer = data.candidates[0].content.parts[0].text;
+          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${answer}`;
+        } catch (err) {
+          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> Unable to reach AI server. Please check connection.`;
+        }
       }
     }
   </script>
