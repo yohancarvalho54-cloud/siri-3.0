@@ -82,47 +82,52 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin: 20px 0;
+      margin: 15px 0;
     }
     .orb-outer {
-      width: 140px;
-      height: 140px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,242,254,0.1) 0%, rgba(11,14,20,1) 70%);
-      border: 1px solid rgba(0,242,254,0.3);
+      background: radial-gradient(circle, rgba(0,242,254,0.15) 0%, rgba(11,14,20,1) 70%);
+      border: 1px solid rgba(0,242,254,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 20px rgba(0,242,254,0.15);
+      box-shadow: 0 0 20px rgba(0,242,254,0.2);
       cursor: pointer;
     }
     .orb-inner {
-      width: 50px;
-      height: 50px;
+      width: 45px;
+      height: 45px;
       border-radius: 50%;
       background: #00f2fe;
       box-shadow: 0 0 15px #00f2fe;
     }
-    .status-text {
-      margin-top: 12px;
-      font-size: 11px;
-      letter-spacing: 2px;
-      color: #6b7280;
-      text-align: center;
+    .response-card {
+      background: #12161f;
+      border: 1px solid #1c212c;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 70px;
+      max-height: 110px;
+      overflow-y: auto;
+      font-size: 13px;
+      color: #e5e7eb;
+      margin-bottom: 10px;
     }
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
     .tile {
       background: #12161f;
       border: 1px solid #1c212c;
-      border-radius: 14px;
-      padding: 16px 12px;
+      border-radius: 12px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
       cursor: pointer;
       transition: background 0.2s;
     }
@@ -131,10 +136,10 @@
     }
     .tile i {
       color: #00f2fe;
-      font-size: 18px;
+      font-size: 16px;
     }
     .tile span {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
     }
     .chat-box {
@@ -195,7 +200,10 @@
       <div class="orb-outer" id="mic-orb" onclick="triggerMic()">
         <div class="orb-inner"></div>
       </div>
-      <div class="status-text" id="status-label">STANDBY</div>
+    </div>
+
+    <div class="response-card" id="ai-response">
+      <span style="color:#00f2fe; font-weight:600;">System Ready:</span> Tap a tile or type a command below to begin interaction.
     </div>
 
     <div class="grid">
@@ -225,10 +233,6 @@
       </div>
     </div>
 
-    <p style="font-size:11px; color:#6b7280; text-align:center; font-style:italic; margin: 10px 0;">
-      Hey! I'm Siri 2.0. Ask me anything, or tap a tile below.
-    </p>
-
     <div style="display:flex; gap:10px; align-items:center;">
       <div class="chat-box" style="flex:1;">
         <input type="text" id="user-input" placeholder="Issue command..." onkeypress="handleKey(event)">
@@ -252,20 +256,14 @@
     }
 
     function runTile(action) {
-      const status = document.getElementById('status-label');
-      status.innerText = action.toUpperCase() + ' ACTIVE';
-      status.style.color = '#00f2fe';
+      const box = document.getElementById('ai-response');
+      const model = document.querySelector('.model-tab.active').innerText;
+      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}] Hardware Execution:</span> Successfully initialized ${action} module protocol. Device sensors responding normally.`;
     }
 
     function triggerMic() {
-      const status = document.getElementById('status-label');
-      if (status.innerText === 'STANDBY') {
-        status.innerText = 'LISTENING...';
-        status.style.color = '#00f2fe';
-      } else {
-        status.innerText = 'STANDBY';
-        status.style.color = '#6b7280';
-      }
+      const box = document.getElementById('ai-response');
+      box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">Voice Input:</span> Listening for audio commands... Speak now.`;
     }
 
     function handleKey(e) {
@@ -277,15 +275,30 @@
     function sendCommand() {
       const input = document.getElementById('user-input');
       const text = input.value.trim();
-      const status = document.getElementById('status-label');
+      const box = document.getElementById('ai-response');
       
       if(text !== '') {
-        const activeModel = document.querySelector('.model-tab.active').innerText;
-        status.innerHTML = `<span style="color:#00f2fe">${activeModel}:</span> Thinking...`;
+        const model = document.querySelector('.model-tab.active').innerText;
+        box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}] Processing:</span> Analyzing query...`;
         
         setTimeout(() => {
-          status.innerHTML = `<span style="color:#00f2fe">Response:</span> Handled "${text}"`;
-        }, 800);
+          let reply = "";
+          const lower = text.toLowerCase();
+          
+          if (lower.includes('hello') || lower.includes('hi')) {
+            reply = "Hello! Siri 2.0 neural core online. How can I assist you with your tasks today?";
+          } else if (lower.includes('who are you') || lower.includes('what is your name')) {
+            reply = "I am Siri 2.0, an advanced cross-model AI assistant integrated natively on mobile architecture.";
+          } else if (lower.includes('battery') || lower.includes('power')) {
+            reply = "System power status: Optimal. Battery regulation stable at 84% charge level.";
+          } else if (lower.includes('time')) {
+            reply = `Current local system time is ${new Date().toLocaleTimeString()}.`;
+          } else {
+            reply = `Query processed successfully. Executed neural routing for: "${text}". All sub-routines functioning within standard parameters.`;
+          }
+
+          box.innerHTML = `<span style="color:#00f2fe; font-weight:600;">[${model}]:</span> ${reply}`;
+        }, 600);
 
         input.value = '';
       }
